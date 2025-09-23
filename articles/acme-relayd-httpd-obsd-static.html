@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenBSD: Setup static sites with acme-client, httpd and relayd</title>
+<meta name="description" content="I wanted to create an article website to share my knowledge and also
+contribute to OpenBSD somehow, so I had the idea to host it in an
+OpenBSD VPS. Searching ho">
+<meta property="og:title" content="OpenBSD: Setup static sites with acme-client, httpd and relayd">
+<meta property="og:description" content="I wanted to create an article website to share my knowledge and also
+contribute to OpenBSD somehow, so I had the idea to host it in an
+OpenBSD VPS. Searching ho">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="../main/style.css">
+</head>
+<body>
+<header><h1>OpenBSD: Setup static sites with acme-client, httpd and relayd</h1></header>
+<main>
+<article>
+
+<h2>Introduction</h2>
+<p>I wanted to create an article website to share my knowledge and also
+contribute to OpenBSD somehow, so I had the idea to host it in an
+OpenBSD VPS. Searching how can I do it, I found about
+<code>httpd</code>, <code>relayd</code> and <code>acme-client</code>,
+all available at <a href="https://man.openbsd.org">OpenBSD man
+pages</a>.</p>
+<h2>How it works?</h2>
+<p>We will setup <code>httpd(8)</code> for serving the content,
+<code>relayd(8)</code> for tls termination and security headers,
+<code>acme-client(1)</code> for managing and getting certifications, and
+<code>pf</code> for setting rules in our server.</p>
+<pre><code>| request   acme-client (Let&#39;s Encrypt cert renewals)
+|                       ^
+|                       |
+v                       v
+---&gt; relayd (tls termination + security headers) ---&gt; httpd (serves static files)</code></pre>
+<h2>acme-client</h2>
+<p>If you want, copy the example <code>acme-client.conf(5)</code> in
+<code>/etc/examples/acme-client.conf</code> to
+<code>/etc/acme-client.conf</code> to have it as template.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cp /etc/examples/acme-client.conf /etc/</span></span></code></pre></div>
+<p>Now, configure <code>acme-client.conf(5)</code> in <code>/etc</code>
+directory, example:</p>
+<pre><code># Authorities contactable by acme
+authority letsencrypt {
+	api url &quot;https://acme-v02.api.letsencrypt.org/directory&quot;
+	account key &quot;/etc/acme/letsencrypt-privkey.pem&quot;
+}
+
+# Certificates for domain via letsencrypt
+domain fugu.cafe {
+	alternative names { www.fugu.cafe }
+	domain key &quot;/etc/ssl/private/fugu.cafe.key&quot;
+	domain full chain certificate &quot;/etc/ssl/fugu.cafe.crt&quot;
+	sign with letsencrypt
+}
+</code></pre>
+<p>Now you can generate the certificate. If you already set up relayd,
+you must reload it after generating the certificate.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># acme-client -v fugu.cafe</span></span></code></pre></div>
+<p>If you want renewal, you can setup a <code>cron(8)</code> job with
+this command plus <code>relayd(8)</code> reloading.</p>
+<pre><code># Every 03:00
+0 3 * * * acme-client fugu.cafe &amp;&amp; rcctl restart relayd</code></pre>
+<h2>httpd</h2>
+<p>If you want, copy the example <code>httpd.conf(5)</code> in
+<code>/etc/examples/httpd.conf</code> to <code>/etc/httpd.conf</code> to
+have it as template.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cp /etc/examples/httpd.conf /etc/</span></span></code></pre></div>
+<p>Now, configure <code>httpd.conf(5)</code> in <code>/etc</code>
+directory. It's recommended to put your static site under
+<code>/var/www/htdocs/</code>. Here is an example:</p>
+<pre><code># Redirects to https
+server &quot;fugu.cafe&quot; {
+    listen on 127.0.0.1 port 80
+
+    location * {
+        block return 301 &quot;https://$HTTP_HOST$REQUEST_URI&quot;
+    }
+}
+
+server &quot;fugu.cafe&quot; {
+    alias &quot;www.fugu.cafe&quot;
+
+    listen on 127.0.0.1 port 8080
+
+    location &quot;/.well-known/acme-challenge/*&quot; {
+       root &quot;/acme&quot;
+       request strip 2
+    }
+
+    # Recommended to set it in htdocs, i did it outside.
+    # e.g. /htdocs/fugu.cafe
+    root &quot;/fugu.cafe&quot;
+
+    location &quot;/&quot; {
+        block return 302 &quot;/main/&quot;
+    }
+
+    # Block hidden files
+    location &quot;/.*&quot; {
+        block
+    }
+}
+</code></pre>
+<p>It's recommended to change your static website directory owner to
+<code>www</code>, because <code>httpd(8)</code> is run as
+<code>www</code> user as default.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># chown -R www:www /var/www/fugu.cafe</span></span></code></pre></div>
+<p>Check for any errors in httpd configuration.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># httpd -n </span></span></code></pre></div>
+<p>If your configuration is OK, you can start or restart
+<code>httpd(8)</code>.</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode sh"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># rcctl enable httpd</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># rcctl start httpd</span></span></code></pre></div>
+<h2>relayd</h2>
+<p>If you want, copy the example <code>relayd.conf(5)</code> in
+<code>/etc/examples/relayd.conf</code> to <code>/etc/relayd.conf</code>
+to have it as template.</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode sh"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cp /etc/examples/relayd.conf /etc/</span></span></code></pre></div>
+<p>Now, configure <code>relayd.conf(5)</code> in <code>/etc</code>
+directory, example:</p>
+<pre><code>ipv4=&quot;&lt;address4&gt;&quot;
+ipv6=&quot;&lt;address6&gt;&quot; 
+
+table &lt;local&gt; { 127.0.0.1 }
+
+http protocol https {
+  tls keypair &quot;fugu.cafe&quot;
+
+  tls ciphers &quot;ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256&quot;
+
+  # Security headers
+  match response header set &quot;Referrer-Policy&quot; value &quot;same-origin&quot;
+  match response header set &quot;X-Frame-Options&quot; value &quot;deny&quot;
+  match response header set &quot;X-XSS-Protection&quot; value &quot;1; mode=block&quot;
+  match response header set &quot;X-Content-Type-Options&quot; value &quot;nosniff&quot;
+  match response header set &quot;Strict-Transport-Security&quot; value &quot;max-age=31536000; includeSubDomains; preload&quot;
+  match response header set &quot;Content-Security-Policy&quot; value &quot;default-src &#39;self&#39;; style-src &#39;self&#39;; img-src &#39;self&#39;; base-uri &#39;self&#39;; frame-ancestors&quot;
+  match response header set &quot;Permissions-Policy&quot; value &quot;accelerometer=()&quot;
+  match response header set &quot;Cache-Control&quot; value &quot;max-age=86400&quot;
+  match request header append &quot;X-Forwarded-For&quot; value &quot;$REMOTE_ADDR&quot;
+  match request header append &quot;X-Forwarded-Port&quot; value &quot;$REMOTE_PORT&quot;
+ 
+  return error
+  pass
+}
+
+relay wwwtls {
+  listen on $ipv4 port 443 tls
+  protocol https
+  forward to &lt;local&gt; port 8080
+}
+
+relay www6tls {
+  listen on $ipv6 port 443 tls
+  protocol https
+  forward to &lt;local&gt; port 8080
+}
+
+# I didn&#39;t want to go direct to httpd in case of http for usability
+relay www {
+  listen on $ipv4 port 80
+  forward to &lt;local&gt; port 80
+}
+
+relay www6 {
+  listen on $ipv6 port 80
+  forward to &lt;local&gt; port 80
+}
+</code></pre>
+<p>Feel free to set security headers to your need. Also, check for any
+errors.</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode sh"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># relayd -n </span></span></code></pre></div>
+<p>If your configuration is OK, you can start or restart
+<code>relayd(8)</code>.</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode sh"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># rcctl enable relayd</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># rcctl start relayd</span></span></code></pre></div>
+<h2>Conclusion</h2>
+<p>If everything is OK, your static site is now fully served by OpenBSD,
+using <code>httpd(8)</code> for content, <code>relayd(8)</code> for tls
+termination and headers, and <code>acme-client(1)</code> for certificate
+management. It’s a simple, secure and minimal setup, entirely maintained
+within the system itself.</p>
+</article>
+</main>
+<footer>
+<address>João G. — <a href="https://github.com/jgtux">GitHub</a> — <a href="https://www.linkedin.com/in/jv-guedes-unixer">LinkedIn</a></address>
+<p>&copy; 2025 fugu.cafe</p>
+</footer>
+</body>
+</html>
