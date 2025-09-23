@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OpenBSD: Setup static sites with acme-client, httpd and relayd</title>
-<meta name="description" content="I wanted to create an article website to share my knowledge and also
+<meta name="description" content="I wanted to create an article site to share my knowledge and also
 contribute to OpenBSD somehow, so I had the idea to host it in an
-OpenBSD VPS. Searching ho">
+OpenBSD VPS. Searching how c">
 <meta property="og:title" content="OpenBSD: Setup static sites with acme-client, httpd and relayd">
-<meta property="og:description" content="I wanted to create an article website to share my knowledge and also
+<meta property="og:description" content="I wanted to create an article site to share my knowledge and also
 contribute to OpenBSD somehow, so I had the idea to host it in an
-OpenBSD VPS. Searching ho">
+OpenBSD VPS. Searching how c">
 <meta property="og:type" content="article">
 <link rel="stylesheet" href="../main/style.css">
 </head>
@@ -20,7 +20,7 @@ OpenBSD VPS. Searching ho">
 <article>
 
 <h2>Introduction</h2>
-<p>I wanted to create an article website to share my knowledge and also
+<p>I wanted to create an article site to share my knowledge and also
 contribute to OpenBSD somehow, so I had the idea to host it in an
 OpenBSD VPS. Searching how can I do it, I found about
 <code>httpd</code>, <code>relayd</code> and <code>acme-client</code>,
@@ -51,6 +51,7 @@ authority letsencrypt {
 
 # Certificates for domain via letsencrypt
 domain fugu.cafe {
+    # Subdomains
 	alternative names { www.fugu.cafe }
 	domain key &quot;/etc/ssl/private/fugu.cafe.key&quot;
 	domain full chain certificate &quot;/etc/ssl/fugu.cafe.crt&quot;
