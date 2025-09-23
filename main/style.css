@@ -56,6 +56,10 @@ p {
     margin-bottom: 1em;
 }
 
+code {
+    overflow-x: auto;
+}
+
 /* === Code Blocks === */
 pre, code {
     background-color: #1a1a1a;
@@ -63,7 +67,6 @@ pre, code {
     font-family: "Fira Code", "Courier New", Courier, monospace;
     font-size: 0.95em;
     line-height: 1.5;
-    overflow-x: auto;
     padding: 1em;
     border-radius: 5px;
     display: block;
