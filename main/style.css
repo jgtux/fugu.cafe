@@ -12,6 +12,21 @@ address {
     text-align: center;
 }
 
+/* Top article image */
+main img {
+    display: block;
+    margin: 1em auto; 
+    height: auto;
+    max-width: 50%;       /* reduce size to 50% of container */
+    border: 4px solid #e0e0e0; /* white border */
+}
+
+@media (max-width: 600px) {
+    main img {
+        max-width: 80%;   /* larger relative width on small screens */
+    }
+}
+
 /* === Layout === */
 article, nav, footer, main {
     margin: 0 auto;
