@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenBSD: Desktop Tuning Guide</title>
+<meta name="description" content="While tuning my X260 Thinkpad with OpenBSD and my W541 Thinkpad with
+FreeBSD, I realized the importance of understanding what each important
+system parameter fo">
+<meta property="og:title" content="OpenBSD: Desktop Tuning Guide">
+<meta property="og:description" content="While tuning my X260 Thinkpad with OpenBSD and my W541 Thinkpad with
+FreeBSD, I realized the importance of understanding what each important
+system parameter fo">
+<meta property="og:url" content="https://fugu.cafe/articles/obsd-desktop-tuning.html">
+<meta property="og:image" content="../images/obsd-tuning-dsk-article.webp">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="../main/style.css">
+</head>
+<body>
+<header><h1>OpenBSD: Desktop Tuning Guide</h1></header>
+<nav><a href="../main" class="back-button">&larr; Back to Main Page</a></nav>
+<main>
+<img src="../images/obsd-tuning-dsk-article.webp" alt="OpenBSD desktop tuning">
+<article>
+
+<h2>Introduction</h2>
+<p>While tuning my X260 Thinkpad with OpenBSD and my W541 Thinkpad with
+FreeBSD, I realized the importance of understanding what each important
+system parameter for tuning does and how it affects performance.</p>
+<p>This guide aims to clarify the purpose of each parameter and their
+relevance for optimizing a BSD desktop experience. This guide is for
+OpenBSD, I will write a separate one for FreeBSD, check <a
+href="man.openbsd.org">OpenBSD man pages</a> for detailed information
+and more options.</p>
+<h2>/etc/sysctl.conf</h2>
+<h3>A Quick brief on sysctl(8)</h3>
+<p><code>sysctl(8)</code> utility displays kernel state variables and
+allow processes with appropriate privilege to modify kernel state
+variables. The state to be retrieved or set is described using a
+"Management Information Base" (MIB) style name, using a dotted set of
+parameters, e.g:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> sysctl hw.audio.record</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kern.audio.record=0</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> doas sysctl kern.audio.record=1</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">kern.audio.record:</span> 0 <span class="at">-</span><span class="op">&gt;</span> 1 <span class="co"># activates mic</span></span></code></pre></div>
+<h3>/etc/sysctl.conf</h3>
+<p><code>sysctl.conf(5)</code> is the <code>sysctl(8)</code>
+configuration file to set sysctl variables at system startup. Here is an
+example with tuning and each parameter quick explanation:</p>
+<pre><code># i recommend researching and testing with `sysctl(8)` before doing anything here for safety, there are tons of parameters to explore.
+
+# shared memory is a method of sharing a common memory space for inter-processes communication (IPC)
+# modern browsers, multimedia apps, databases, games, containers, vms
+
+kern.shminfo.shmall=1966080 # total number of pages, 1 page per 4096 bytes. ill put 1966080 pages for my 8gb tp ((8GB-512M)/4096)
+kern.shminfo.shmmax=536870912  # cap for each shm segment, for safety, ill set it dividing my memory by 16. 512mb is enough (db shared_buffer, browser cache).
+kern.shminfo.shmmni=2048 # max number of segments in a system (enough space for multitasks, containers, vms)
+kern.shminfo.shmseg=2048 # max number of segments a single process can attach to (allows browsers/multimedia with many tabs/processes use multiple segments)
+
+# IPC semaphores (sync between processes)
+kern.seminfo.semmns=4096 # total semaphores
+kern.seminfo.semmni=1024 # total sets of semaphores, 1024 x average semaphores per set should equal to SEMMNS
+
+# Max processes and open file descriptors (enough for me. browsers, compiling, multitasking)
+kern.maxproc=8192
+kern.maxfiles=16384
+
+# Vnode is a kernel abstraction of a file system, it represents a file system object (good for caching)
+kern.maxvnodes=100000 # max tracked filesystem objects by the kernel (open files, dirs, sockets, etc.)
+
+# Network tuning
+kern.somaxconn=1024 # max number of pending TCP connections in listen queue (useful on p2p, modern browsers open tons of connections), 1024 feels enough for me
+net.inet.udp.recvspace=262144 # UDP receive and send buffers, useful for streaming and calls
+net.inet.udp.sendspace=262144
+net.inet.tcp.mssdflt=1460 # max segment size to ethernet MTU
+net.inet.tcp.keepidle=300 # reduce idle keepalive time to detect dead connections faster
+net.inet.ip.ifq.maxlen=4096 # increase interface queue max length for better burst handling
+net.inet6.ip6.ifq.maxlen=4096 # for ipv6
+
+hw.smt=1 # enable hyperthreading, check https://www.openbsd.org/faq/faq10.html before</code></pre>
+<h2>/etc/login.conf</h2>
+<p><code>login.conf(5)</code> is the configuration file, which describes
+various attributes to login class. A login class determines what styles
+of authentication are available and its session resource limits and
+environment. I'll modify staff attributes and add my user to staff
+class, here is an example:</p>
+<pre><code># Staff have fewer restrictions and can login even when nologins are set.
+# cur - initial limit
+# max - max limit
+# use &#39;infinity&#39; for unlimited restriction
+# for datasize, ill set max = (shmall - 256M), cur = shmall/2
+# for maxproc, ill set max = maxproc/4, cur = maxproc/8, my user doesnt need too many processes
+# for openfiles, ill set max = (maxfiles - 1024), cur = maxfiles/2
+# for stacksize, ill set max = 32M, cur = 16M
+staff:\
+	:datasize-cur=4096M:\
+	:datasize-max=7936M:\
+	:maxproc-cur=1024:\
+	:maxproc-max=2048:\
+	:openfiles-cur=8192:\
+	:openfiles-max=15360:\
+	:stacksize-cur=16M:\
+    :stacksize-max=32M:\
+	:ignorenologin:\
+	:requirehome@:\
+	:tc=default:\
+	:lang=en_US.UTF-8:</code></pre>
+<p>Adding my user to staff class:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> doas usermod <span class="at">-L</span> staff splattedbrain</span></code></pre></div>
+<p>You can build <code>/etc/login.conf.db</code> if your
+<code>login.conf(5)</code> is large for performance improvement:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> doas cap_mkdb /etc/login.conf</span></code></pre></div>
+<h2>/etc/fstab</h2>
+<p>The <code>fstab(5)</code> file contains static information about the
+filesystems and their mount configurations. There are mount options that
+improves read and write performance, like <code>noatime</code>, which
+prevents the system from updating the access time of a file unless it's
+modified or the status change time are also being updated, it reduces
+writing operations.</p>
+<pre><code># if you need, you can disable swap partition with swapctl(8) &#39;-d&#39; parameter
+f0c02cfb168f7d3e.b none swap sw
+f0c02cfb168f7d3e.a / ffs rw,noatime,wxallowed 1 1</code></pre>
+<h2>mfs on /tmp or ~/.cache</h2>
+<p>If you have enough memory on your and you can use a part for caching
+temporary files, you should mount a <code>mfs</code> filesystem on
+<code>/tmp</code> or <code>~/.cache</code>. <code>mfs</code> (Memory
+filesystem) allows creating a virtual disk using ram, being useful for
+frequently accessed files, but all data is lost when the system is
+powered off. For example, in <code>fstab(5)</code>:</p>
+<pre><code># -s for the size
+swap /tmp mfs rw,nosuid,nodev,-s=512M 0 0</code></pre>
+<p>You should change <code>/tmp</code> permissions:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> doas chmod 1777 /tmp</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> doas mount /tmp</span></code></pre></div>
+<p>See <a
+href="https://dataswamp.org/~solene/2018-05-08-mfs-tmp.html">"Use
+ramdisk on /tmp on OpenBSD (2018-05-08)"</a> for detailed
+information.</p>
+<h2>Conclusion</h2>
+<p>This guide focuses on safe, desktop-appropriate tuning for OpenBSD.
+Most of these settings help improve responsiveness, concurrency, and
+memory utilization without sacrificing stability.</p>
+</article>
+</main>
+<footer>
+<address>João G. — <a href="https://github.com/jgtux">GitHub</a> | <a href="https://www.linkedin.com/in/jv-guedes-unixer">LinkedIn</a></address>
+<p>&copy; 2025 fugu.cafe</p>
+</footer>
+</body>
+</html>
