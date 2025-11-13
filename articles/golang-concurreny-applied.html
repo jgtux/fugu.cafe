@@ -20,7 +20,6 @@ back-ends, but I decided to cover bo">
 <header><h1>Golang: Go concurrency applied in back-ends</h1></header>
 <nav><a href="../main" class="back-button">&larr; Back to Main Page</a></nav>
 <main>
-<img src="../images/go-concurrency-article.webp" alt="Go concurrency applied in back-ends">
 <article>
 
 <h2>Introduction</h2>
@@ -34,11 +33,7 @@ concept for building efficient and high-performance applications.<br />
 Concurrency in computing allows tasks to progress by interleaved
 execution, improving performance and resource usage of tasks such as I/O
 operations, daemons, back-ends and more. It's essential, especially in
-applications that demand fast returns and support multiple users.<br />
-Remember, concurrency is different from parallelism. While concurrency
-manages tasks by interleaved execution, in other words, switching
-between tasks efficiently, parallelism executes multiple tasks
-simultaneously, it requires more than one core.</p>
+applications that demand fast returns and support multiple users.</p>
 <h2>Goroutines and Channels</h2>
 <p>Go concurrency is built around goroutines and channels, two features
 that walk together in Go concurrency.</p>
@@ -320,6 +315,77 @@ options:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> go run main.go  </span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">final</span> value: 5000</span></code></pre></div>
 <h2>Go concurrency applied in back-ends</h2>
+<p>Concurrency shines in back-end development. It allows you to process
+multiple tasks and background jobs efficiently without blocking the flow
+and high overhead. There are a lot of situations where they are useful,
+such as:</p>
+<ul>
+<li><p>Financial operations, where atomic updates ensure safe and
+consistent exchanges.</p></li>
+<li><p>Heavy data processing, where heavy data can be split into chunks
+and processed concurrently.</p></li>
+<li><p>Scheduled or cycled jobs, which can run independently in the
+background.</p></li>
+<li><p>Calling multiple services or APIs for faster processing.</p></li>
+</ul>
+<h3>"context" package</h3>
+<p>In back-end applications, you often need a way to cancel operations,
+set deadlines or timeouts, or pass request-scoped datam, and that’s
+where the <code>context</code> package shines.</p>
+<p>Here is an example using <code>net/http</code> with a request-scoped
+context and timeout:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ackage main</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="op">(</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>	<span class="st">&quot;context&quot;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>	<span class="st">&quot;fmt&quot;</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>	<span class="st">&quot;net/http&quot;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>	<span class="st">&quot;time&quot;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="op">)</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> handleRequest<span class="op">(</span>w http<span class="op">.</span>ResponseWriter<span class="op">,</span> r <span class="op">*</span>http<span class="op">.</span>Request<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>	<span class="co">// get the request-scoped context from the request</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>	ctx <span class="op">:=</span> r<span class="op">.</span>Context<span class="op">()</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>	<span class="co">// attribute to the context a 2-second timeout</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>	ctx<span class="op">,</span> cancel <span class="op">:=</span> context<span class="op">.</span>WithTimeout<span class="op">(</span>ctx<span class="op">,</span> <span class="dv">2</span><span class="op">*</span>time<span class="op">.</span>Second<span class="op">)</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>	<span class="co">// schedule the context closure in the end</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>	<span class="cf">defer</span> cancel<span class="op">()</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>	done <span class="op">:=</span> <span class="bu">make</span><span class="op">(</span><span class="kw">chan</span> <span class="dt">string</span><span class="op">)</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>	<span class="cf">go</span> <span class="kw">func</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>		time<span class="op">.</span>Sleep<span class="op">(</span><span class="dv">3</span> <span class="op">*</span> time<span class="op">.</span>Second<span class="op">)</span> <span class="co">// longer than timeout</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>		done <span class="op">&lt;-</span> <span class="st">&quot;task completed&quot;</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>	<span class="op">}()</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>	<span class="cf">select</span> <span class="op">{</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>	<span class="cf">case</span> res <span class="op">:=</span> <span class="op">&lt;-</span>done<span class="op">:</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>		fmt<span class="op">.</span>Fprintf<span class="op">(</span>w<span class="op">,</span> <span class="st">&quot;Success: %s</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> res<span class="op">)</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>	<span class="cf">case</span> <span class="op">&lt;-</span>ctx<span class="op">.</span>Done<span class="op">():</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>		<span class="co">// ctx.Err() returns reason for cancellation </span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>		http<span class="op">.</span>Error<span class="op">(</span>w<span class="op">,</span> fmt<span class="op">.</span>Sprintf<span class="op">(</span><span class="st">&quot;Request canceled: %v&quot;</span><span class="op">,</span> ctx<span class="op">.</span>Err<span class="op">()),</span> http<span class="op">.</span>StatusRequestTimeout<span class="op">)</span></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>	<span class="op">}</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>	http<span class="op">.</span>HandleFunc<span class="op">(</span><span class="st">&quot;/task&quot;</span><span class="op">,</span> handleRequest<span class="op">)</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>	fmt<span class="op">.</span>Println<span class="op">(</span><span class="st">&quot;Server running at http://localhost:8080&quot;</span><span class="op">)</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>	http<span class="op">.</span>ListenAndServe<span class="op">(</span><span class="st">&quot;:8080&quot;</span><span class="op">,</span> <span class="ot">nil</span><span class="op">)</span></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Look at the output:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode sh"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> curl http://localhost:8080/task</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Request</span> canceled: context deadline exceeded</span></code></pre></div>
+<p>Notice how context is essential for controlling request lifetimes,
+allowing your back-end to cancel unnecessary work, and provide fast,
+reliable responses to clients.</p>
+<h2>Conclusion</h2>
+<p>If everything is set up correctly, your Go back-end can now
+efficiently handle multiple tasks concurrently, using goroutines for
+lightweight concurrency, channels and sync primitives for safe
+operations, and the context package for managing request lifetimes. It’s
+a simple, robust, and responsive setup.</p>
 </article>
 </main>
 <footer>
