@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Golang: Did you know about generic type sets?</title>
+<meta name="description" content="Did you know about generic type sets? If you want a complete
+monomorphization in Golang, you must know about generic type sets.">
+<meta property="og:title" content="Golang: Did you know about generic type sets?">
+<meta property="og:description" content="Did you know about generic type sets? If you want a complete
+monomorphization in Golang, you must know about generic type sets.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://fugu.cafe/articles/golang-generic-type-sets.html">
+<meta property="og:image" content="../images/golang-generic-typesets.webp">
+<link rel="stylesheet" href="../main/style.css">
+</head>
+<body>
+<header><h1>Golang: Did you know about generic type sets?</h1></header>
+<nav><a href="../main" class="back-button">&larr; Back to Main Page</a></nav>
+<main>
+<img src="../images/golang-generic-typesets.webp" alt="Golang Generic Typesets">
+<article>
+
+<h2>Introduction</h2>
+<p>Did you know about generic type sets? If you want a complete
+monomorphization in Golang, you must know about generic type sets.</p>
+<h2>What is monomorphization in a nutshell?</h2>
+<p>Monomorphization is the process where the compiler generates
+specialized machine code for each concrete type used in a generic
+function.<br />
+If you call a generic function with <code>int64</code> and later with
+<code>float64</code>, the compiler can emit two separate optimized
+versions, one for each type.</p>
+<h2>The problem</h2>
+<p>To understand why this works, it’s important to remember that Go uses
+interfaces in two different ways:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">// Traditional usage of interfaces -&gt; dynamic dispatch</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Writer <span class="kw">interface</span> <span class="op">{</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    Write<span class="op">([]</span><span class="dt">byte</span><span class="op">)</span> <span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="dt">error</span><span class="op">)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">// Generic constraints (type sets)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Number <span class="kw">interface</span> <span class="op">{</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">~</span><span class="dt">int64</span> <span class="op">|</span> <span class="op">~</span><span class="dt">float64</span>  <span class="co">// use tilde to allow any type whose underlying type is this</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Any <span class="kw">interface</span> <span class="op">{}</span> <span class="co">// Anything implements</span></span></code></pre></div>
+<p>Even though <code>Any</code> accepts any type, it doesn't help the
+compiler apply monomorphization. With <code>Any</code>, the compiler has
+no clue which concrete type you're working with.<br />
+Without any clues, everything is left in our hands, we need to apply
+type inference (assertion) and check for type safety.<br />
+For example, <code>AnyAdd</code> won't work without type inference, but
+<code>NumberAdd</code> doesn't need type inferece because of
+monomorphization, and also runs faster than <code>AnyAdd</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">// [T x] stands for &quot;T can be of any type that implements x&quot;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Using Any</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">// extra-big overhead</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> AnyAdd<span class="op">[</span>T Any<span class="op">](</span>a<span class="op">,</span> b T<span class="op">)</span> Any <span class="op">{</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    ai <span class="op">:=</span> Any<span class="op">(</span>a<span class="op">)</span> <span class="co">// needs conversion for assertion</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    bi <span class="op">:=</span> Any<span class="op">(</span>b<span class="op">)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">switch</span> av <span class="op">:=</span> ai<span class="op">.(</span><span class="kw">type</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="dt">int64</span><span class="op">:</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        bv<span class="op">,</span> ok <span class="op">:=</span> bi<span class="op">.(</span><span class="dt">int64</span><span class="op">)</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">!</span>ok <span class="op">{</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>            <span class="bu">panic</span><span class="op">(</span><span class="st">&quot;b is not int64&quot;</span><span class="op">)</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> av <span class="op">+</span> bv</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="dt">float64</span><span class="op">:</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        bv<span class="op">,</span> ok <span class="op">:=</span> bi<span class="op">.(</span><span class="dt">float64</span><span class="op">)</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">!</span>ok <span class="op">{</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>            <span class="bu">panic</span><span class="op">(</span><span class="st">&quot;b is not float64&quot;</span><span class="op">)</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> av <span class="op">+</span> bv</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">default</span><span class="op">:</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        <span class="bu">panic</span><span class="op">(</span>fmt<span class="op">.</span>Sprintf<span class="op">(</span><span class="st">&quot;unsupported type: %T&quot;</span><span class="op">,</span> a<span class="op">))</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co">// Using a type set -&gt; fully monomorphized</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> NumberAdd<span class="op">[</span>T Number<span class="op">](</span>a<span class="op">,</span> b T<span class="op">)</span> T <span class="op">{</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> a <span class="op">+</span> b</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>See the difference.</p>
+<h2>Conclusion</h2>
+<p>If you don’t know the type in advance, like with a dynamic JSON
+response, use empty interfaces (like Any/any) wth runtime type checks.
+This provides flexibility, but at the cost of safety and
+performance.</p>
+<p>If the set possible types is known, using type sets allows the
+compiler to fully monomorphize your code, giving safety and optimized
+execution.</p>
+</article>
+</main>
+<footer>
+<address>João G. — <a href="https://github.com/jgtux">GitHub</a> | <a href="https://www.linkedin.com/in/jv-guedes-unixer">LinkedIn</a></address>
+<p>&copy; 2025 fugu.cafe</p>
+</footer>
+</body>
+</html>
