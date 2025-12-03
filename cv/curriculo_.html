@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>João G. - Curriculum Vitae</title>
+  <title>João Guedes - Curriculum Vitae</title>
   <link rel="stylesheet" href="../main/style.css">
 </head>
 <body>
   <header>
-    <h1>João G.</h1>
+    <h1>João Guedes</h1>
     <address>
-       <a href="https://linkedin.com/in/jv-guedes-unixer">LinkedIn</a> | 
-       <a href="https://github.com/jgtux">GitHub</a> | 
+       <a href="https://linkedin.com/in/jv-guedes-unixer">LinkedIn</a> |
+       <a href="https://github.com/jgtux">GitHub</a> |
        <a href="https://fugu.cafe">fugu.cafe</a><br>
        Campinas, SP, Brazil</address>
   </header>
@@ -20,10 +20,12 @@
     <article>
       <h2>Professional Summary</h2>
       <p>
-          Versatile Software Developer with strong experience in <strong>Go</strong> and high proficiency in <strong>Unix-like systems</strong> <strong>(Linux, BSDs)</strong>. 
-          Skilled in <strong>Microservices, API integrations, OCR/NLP systems, deployment pipelines, and automation tooling</strong>. 
-          Experienced in <strong>C</strong> and <strong>shell scripting</strong> for <strong>system utilities, server management, and desktop automation</strong>. 
-          Practical knowledge in <strong>Data Science & AI</strong> with applied projects in <strong>Computer Vision</strong> and <strong>prediction</strong>. 
+          Versatile Software Developer with strong experience in <strong>Go</strong> and <strong>Unix-like systems (Linux, BSDs)</strong>. 
+          Skilled in <strong>Microservices, distributed systems architecture, message-driven architectures (gRPC, Kafka, Asynq), API integrations, OCR systems, deployment pipelines, and automation tooling</strong>. 
+          Experienced in and <strong>shell scripting (bash, ksh, zsh)</strong> for <strong>system utilities, server management, and desktop automation</strong>. 
+          Proficient in <strong>performance optimization strategies</strong> including <strong>connection pooling, caching, and concurrent programming</strong>. 
+          Practical knowledge in <strong>Data Science & AI</strong> with applied projects in <strong>OCR and LLMs</strong>. 
+          Strong background in <strong>container technologies (Docker, FreeBSD jails)</strong> and <strong>filesystem administration (ZFS, ext4, XFS)</strong>. 
           <strong>Passionate about privacy and open-source.</strong>
       </p>
     </article>
@@ -31,46 +33,53 @@
     <article>
       <h2>Technical Skills</h2>
       <ul>
-        <li><strong>Languages:</strong> Go, Python, Shell, Clojure, Haskell, C, Node.js</li>
-        <li><strong>Web & APIs:</strong> REST, Microservices, API integration, scraping</li>
+        <li><strong>Languages:</strong> Go (primary), Python (Data microservices), Elixir (Lightweight broadcasting), ClojureScript (primary for UI), C, Shell Scripting (bash, ksh, zsh), Node.js, Haskell</li>
+        <li><strong>Frameworks/Library:</strong> Gin, Gorilla, Reagent, FastAPI, Flask, LangChain, Pandas, OpenCV, Vue.js
+        <li><strong>Distributed Systems & Messaging:</strong> Microservices Architecture, gRPC, Protocol Buffers, Apache Kafka, Asynq, REST APIs, Messagering, High-scale Websocket communication strategies.</li>
+        <li><strong>Systems & Infrastructure:</strong> Linux (Ubuntu, Debian, CentOS, etc), BSD (FreeBSD, OpenBSD), Docker, Podman, FreeBSD jails, OpenSSH, OpenSMTPD, ZFS, ext4, XFS, SSH administration</li>
+        <li><strong>Performance & Optimization:</strong> Connection pooling, Query optimization, Redis caching, Asynq job scheduling, Concurrent programming, Load balancing, Application profiling</li>
         <li><strong>Databases:</strong> PostgreSQL, MySQL, MongoDB</li>
-        <li><strong>DevOps:</strong> Linux/BSDs, Docker, CI/CD</li>
-        <li><strong>AI/DS:</strong> NLP, OCR (Mistral-OCR, pyzbar), OpenCV, Pandas, statistics</li>
-        <li><strong>Other:</strong> KISS philosophy, Functional Programming, Privacy Tech</li>
+        <li><strong>AI & Data:</strong> OCR (Mistral-OCR, OpenCV, pyzbar), Statistical analysis</li>
+        <li><strong>DevOps:</strong> CI/CD pipelines, Deployment automation, Infrastructure as Code, Build systems</li>
+        <li><strong>Philosophy:</strong> KISS principles, UNIX, Open-source, Libre</li>
       </ul>
     </article>
 
     <article>
       <h2>Professional Experience</h2>
-      <h3>Backend Developer & Computer Vision | Axxis, Brazil | Jan 2025 – Present</h3>
+      <h3>Backend Engineer | AxxisPay, Brazil | Jan 2023 – Present (2 years)</h3>
       <ul>
-          <li>Developed production-grade <strong>Go backend</strong> modules and <strong>automation</strong> tooling.</li>
-        <li>Built Python microservices:
-          <ul>
-              <li>Restricted product recognition <strong>microservice</strong> (99.6% accuracy, 5,646 real cases).</li>
-              <li>Invoice reader (NFC-e, NF-e, CF-e-SAT) using QR/barcode + OCR (<strong>Mistral</strong> + <strong>OpenCV</strong>).</li>
-          </ul>
-        </li>
-        <li>Implemented <strong>Go</strong> scraper for Brazilian NFC-e directly from Fazenda.</li>
-        <li>Developed flexible search routes with dynamic SQL query building.</li>
-        <li>Integrated external APIs (Ingresso.com, WPS Parking).</li>
-        <li>Maintained Node.js frontends.</li>
-        <li>Dockerized and deployed services (Railway), optimized DB schemas.</li>
+        <li>Developed production-grade <strong>Go backend</strong> modules and <strong>automation</strong> tooling for financial technology platform.</li>
+        <li>Implemented MinIO object storage integration using S3-compatible API for scalable file and document management.</li>
+        <li>Built <strong>Python microservice</strong> for restricted product recognition achieving <strong>99.6% accuracy</strong> across <strong>5,646 real-world cases</strong> using computer vision techniques.</li>
+        <li>Developed invoice reader system supporting multiple Brazilian fiscal document formats <strong>(NFC-e, NF-e, CF-e-SAT)</strong> using QR code/barcode scanning integrated with <strong>OCR (Mistral + OpenCV)</strong>.</li>
+        <li>Implemented <strong>Go-based web scraper</strong> for Brazilian NFC-e fiscal nvoices with direct integration to <strong>Secretaria da Fazenda</strong> systems.</li>
+        <li>Architected flexible search routes with <strong>dynamic SQL query building in Go</strong> for complex filtering and data retrieval.</li>
+        <li>Integrated <strong>WPS parking API</strong> enabling real-time payment processing with OCR capabilities in Go.</li>
+        <li>Integrated <strong>ingresso.com API</strong> for movie listing, scheduling, and ticket purchasing functionality in Go.</li>
+        <li>Implemented <strong>indirect automatic PIX payment processing</strong> in banking application backend.</li>
+        <li>Integrated <strong>indirect automatic PIX API in Go</strong> for seamless payment flows.</li>
+        <li>Maintained and enhanced <strong>Node.js frontend</strong> applications.</li>
+        <li>Containerized services using <strong>Docker</strong> and deployed to <strong>Railway platform</strong> with optimized database schemas and performance tuning.</li>
       </ul>
 
       <h3>System & Automation Projects | Personal / Open Source | 2021 – Present</h3>
       <ul>
-        <li>Developed <strong>Go</strong> library for executing python sentences.</li>
-        <li>C utilities for OpenBSD system info (status bars).</li>
+        <li>Developed production-grade monitoring system for <strong>ZFS filesystems using gRPC</strong>. Implemented server-side logic in <strong>Elixir</strong> with cross-language RPC communication capabilities.</li>
+        <li>Built a simple <strong>streaming application in Go</strong> for <strong>peer-to-peer</strong> media streaming with concurrent download management and subtitles option with subliminal.</li>
+        <li>Created a demonstration of an <strong>authentication service in Go</strong> implementing JWT-based security, password hashing, and HTTP-only session management using <strong>Gin framework</strong>.</li>
+        <li>Maintained comprehensive repository of reusable code snippets and automation tools across <strong>multiple languages</strong> (Shell, Python, Go, C, Clojure).</li>
+        <li>Developed <strong>Go</strong> interop library for executing Python sentences.</li>
+        <li><strong>C utilities</strong> and <strong>Ports</strong> for OpenBSD.</li>
         <li><strong>Shell scripts</strong> for automation (GIF wallpapers, system monitors).</li>
         <li>Developed a <strong>Haskell</strong> program to manage and regenerate my static article website.</li>
-        <li>Started developing <strong>takifugu-db</strong>, experimental DB in <strong>C</strong> using <strong>OpenBSD</strong> utils and library.</li>
       </ul>
 
       <h3>Data Science & AI Projects | University / Personal | 2024 – Present</h3>
       <ul>
-        <li>Applied AI & DS in academic and personal projects.</li>
-        <li>Coursework: <strong>NoSQL</strong> chatbot (<strong>Flask</strong> + <strong>Pymongo</strong>) + UI in <strong>ClojureScript</strong>.</li>
+        <li>Coursework: <strong>NoSQL</strong> chatbot (<strong>Flask</strong> + <strong>PyMongo</strong>) with UI in <strong>ClojureScript</strong>.</li>
+        <li>Coursework: Developed a <strong>Go API</strong> and a <strong>Python API</strong> focused in agentic tasks
+        <li>Developed <strong>statistical analysis</strong> tools and data processing pipelines.</li>
       </ul>
     </article>
 
@@ -82,10 +91,12 @@
     <article>
       <h2>Additional Interests</h2>
       <ul>
-          <li><strong>UNIX systems, privacy & open-source</strong> (since 15 y/o).</li>
-        <li>Aspiring contributor to <strong>BSDs</strong> projects.</li>
-        <li>Experimenting <strong>Functional programming</strong>.</li>
-        <li>Maintains blog at <a href="https://fugu.cafe">fugu.cafe</a>.</li>
+        <li><strong>UNIX systems, privacy & open-source</strong> advocate (since 15 y/o).</li>
+        <li>Aspiring contributor to <strong>BSDs</strong> projects and open-source community.</li>
+        <li>Experimenting with <strong>Functional programming</strong> paradigms and languages.</li>
+        <li>Strong advocate of <strong>UNIX philosophy</strong> and sustainable development practices.</li>
+        <li>Continuous learner staying current with emerging technologies while maintaining deep expertise in foundational system administration concepts and <strong>Unix philosophy</strong>.</li>
+        <li>Maintains technical blog at <a href="https://fugu.cafe">fugu.cafe</a>.</li>
       </ul>
     </article>
   </main>
