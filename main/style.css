@@ -43,8 +43,8 @@ header h1 {
     margin-bottom: 1em;
 }
 
-/* Footer */
-footer {
+/* Footer & licenseTop */
+.licenseTop, footer {
     text-align: center;
     font-size: 0.9em;
     color: #888;
